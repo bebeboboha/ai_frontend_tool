@@ -15,11 +15,13 @@ const main = async () => {
     {
       title: '測試影片 A',
       description: '這是一則測試通知',
+      viewCount: 125000,
       url: 'https://www.youtube.com/watch?v=test1',
     },
     {
       title: '測試影片 B',
       description: '第二則測試通知',
+      viewCount: 87000,
       url: 'https://www.youtube.com/watch?v=test2',
     },
   ]
@@ -29,12 +31,14 @@ LINE 通知測試成功！
 
 ## Top 5 精選
 ### 1. 測試影片 A
-- **重點**：這是一則測試通知
-- **適合誰**：所有人
+- **內容摘要**：這是一支測試影片，示範如何從 Figma 設計稿自動生成 React 元件，並整合 Tailwind CSS。
+- **關鍵重點**：支援 design-to-code 流程
+- **適合誰**：前端開發者
 
 ### 2. 測試影片 B
-- **重點**：第二則測試通知
-- **適合誰**：所有人`
+- **內容摘要**：介紹 Cursor IDE 的新 agent 模式，可自動重構整個專案的 routing 結構。
+- **關鍵重點**：Agent 可批次修改多檔案
+- **適合誰**：Cursor 使用者`
 
   await sendLineNotification({ summary, date, videos })
   console.log('測試完成')

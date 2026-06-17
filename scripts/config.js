@@ -15,3 +15,7 @@ export const MIN_RELEVANCE_SCORE = 0
 
 export const GROQ_MODEL = 'llama-3.3-70b-versatile'
 export const OUTPUT_DIR = 'output/summaries'
+
+export const TRANSCRIPT_CHAR_LIMIT = 4000
+export const TRANSCRIPT_FETCH_DELAY_MS = 500
+export const TRANSCRIPT_LANGUAGES = ['en', 'en-US', 'zh-TW', 'zh-Hant', 'zh-Hans', 'zh']

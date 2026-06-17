@@ -13,7 +13,7 @@ const searchByKeyword = async (keyword, { hoursAgo, maxResults }) => {
     part: 'snippet',
     q: keyword,
     type: 'video',
-    order: 'relevance',
+    order: 'viewCount',
     maxResults: String(maxResults),
     publishedAfter: getPublishedAfter(hoursAgo),
     key: YOUTUBE_API_KEY,
@@ -30,6 +30,41 @@ const searchByKeyword = async (keyword, { hoursAgo, maxResults }) => {
 
   const data = await response.json()
   return data.items ?? []
+}
+
+const fetchVideoDetails = async (videoIds) => {
+  if (videoIds.length === 0) return {}
+
+  const details = {}
+
+  for (let i = 0; i < videoIds.length; i += 50) {
+    const batch = videoIds.slice(i, i + 50)
+    const params = new URLSearchParams({
+      part: 'statistics,snippet',
+      id: batch.join(','),
+      key: YOUTUBE_API_KEY,
+    })
+
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?${params.toString()}`
+    )
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(`YouTube API 詳情請求失敗 (${response.status}): ${errorBody}`)
+    }
+
+    const data = await response.json()
+
+    for (const item of data.items ?? []) {
+      details[item.id] = {
+        viewCount: Number.parseInt(item.statistics?.viewCount ?? '0', 10),
+        description: item.snippet?.description?.trim() || '',
+      }
+    }
+  }
+
+  return details
 }
 
 const parseVideoItem = (item, keyword) => {
@@ -49,7 +84,7 @@ const parseVideoItem = (item, keyword) => {
   }
 }
 
-const dedupeVideos = (videos, maxTotal) => {
+const dedupeVideos = (videos) => {
   const seen = new Set()
   const unique = []
 
@@ -57,13 +92,16 @@ const dedupeVideos = (videos, maxTotal) => {
     if (seen.has(video.videoId)) continue
     seen.add(video.videoId)
     unique.push(video)
-    if (unique.length >= maxTotal) break
   }
 
-  return unique.map((video, index) => ({
-    ...video,
-    rank: index + 1,
-  }))
+  return unique
+}
+
+export const formatViewCount = (count) => {
+  if (!count) return '0'
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`
+  return String(count)
 }
 
 export const fetchYouTubeVideos = async ({
@@ -87,5 +125,24 @@ export const fetchYouTubeVideos = async ({
     }
   }
 
-  return dedupeVideos(allVideos, maxTotal)
+  const uniqueVideos = dedupeVideos(allVideos)
+  const details = await fetchVideoDetails(uniqueVideos.map((video) => video.videoId))
+
+  return uniqueVideos
+    .map((video) => {
+      const detail = details[video.videoId] ?? {}
+      const fullDescription = detail.description || video.description
+
+      return {
+        ...video,
+        description: fullDescription,
+        viewCount: detail.viewCount ?? 0,
+      }
+    })
+    .sort((a, b) => b.viewCount - a.viewCount)
+    .slice(0, maxTotal)
+    .map((video, index) => ({
+      ...video,
+      rank: index + 1,
+    }))
 }

@@ -108,7 +108,10 @@ export const filterVideos = (videos, { minScore = 0, maxCount = 8 } = {}) => {
       relevanceScore: getRelevanceScore(video),
     }))
     .filter((video) => video.relevanceScore >= minScore && isEnglishOrChinese(video.title))
-    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .sort((a, b) => {
+      if (b.viewCount !== a.viewCount) return b.viewCount - a.viewCount
+      return b.relevanceScore - a.relevanceScore
+    })
     .slice(0, maxCount)
     .map((video, index) => ({
       ...video,

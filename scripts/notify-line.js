@@ -1,3 +1,4 @@
+import { formatViewCount } from './fetch-youtube.js'
 import { fetch } from './http.js'
 
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN
@@ -14,6 +15,17 @@ const extractHeadline = (summary) => {
 }
 
 const extractSummaryPicks = (summary) => {
+  const contentMatches = [
+    ...summary.matchAll(/### \d+\. (.+)\n- \*\*內容摘要\*\*：([\s\S]+?)(?=\n- \*\*)/g),
+  ]
+
+  if (contentMatches.length > 0) {
+    return contentMatches.map(([, title, content]) => ({
+      title: title.trim(),
+      point: content.trim().replace(/\n+/g, ' ').slice(0, 150),
+    }))
+  }
+
   return [...summary.matchAll(/### \d+\. (.+)\n- \*\*重點\*\*：(.+)/g)].map(([, title, point]) => ({
     title: title.trim(),
     point: point.trim(),
@@ -28,7 +40,7 @@ const formatTopPicks = (summary, videos) => {
     const title = pick?.title ?? video.title
     const point = pick?.point ?? truncate(video.description, 60)
 
-    return `${index + 1}. ${title}\n   ${point}\n   🔗 ${video.url}`
+    return `${index + 1}. ${title}\n   ${point}\n   👀 ${formatViewCount(video.viewCount)} 次觀看\n   🔗 ${video.url}`
   })
 }
 

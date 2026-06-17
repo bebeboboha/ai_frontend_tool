@@ -11,7 +11,8 @@ import {
   OUTPUT_DIR,
 } from './config.js'
 import { filterVideos } from './filter-videos.js'
-import { fetchYouTubeVideos } from './fetch-youtube.js'
+import { fetchYouTubeVideos, formatViewCount } from './fetch-youtube.js'
+import { enrichVideosWithTranscripts } from './fetch-transcript.js'
 import { sendLineNotification } from './notify-line.js'
 import { summarizeVideos } from './summarize.js'
 
@@ -27,7 +28,7 @@ const formatVideoList = (videos) => {
   return videos
     .map(
       (video) =>
-        `${video.rank}. **${video.title}**（相關度：${video.relevanceScore ?? '-'}）\n   - 頻道：${video.channel}\n   - 關鍵字：${video.matchedKeyword}\n   - 連結：${video.url}`
+        `${video.rank}. **${video.title}**（觀看：${formatViewCount(video.viewCount)} | 相關度：${video.relevanceScore ?? '-'}${video.hasTranscript ? ' | 有字幕' : ''}）\n   - 頻道：${video.channel}\n   - 關鍵字：${video.matchedKeyword}\n   - 連結：${video.url}`
     )
     .join('\n\n')
 }
@@ -37,7 +38,7 @@ const buildMarkdown = ({ date, summary, featuredVideos, allVideos, keywords }) =
 
   return `# AI 每日摘要 — ${date}
 
-> 資料來源：YouTube | 時間範圍：過去 ${HOURS_AGO} 小時 | 關鍵字：${keywordList}
+> 資料來源：YouTube（含字幕） | 時間範圍：過去 ${HOURS_AGO} 小時 | 排序：熱門優先（觀看次數） | 關鍵字：${keywordList}
 > 搜尋 ${allVideos.length} 支 → 篩選 ${featuredVideos.length} 支進行摘要
 
 ${summary}
@@ -60,7 +61,7 @@ const saveSummary = async (markdown, date) => {
 export const runDailyAgent = async () => {
   const date = getTodayDate()
 
-  console.log(`🔍 [${date}] 搜尋過去 ${HOURS_AGO} 小時內的 AI 前端相關 YouTube 影片...`)
+  console.log(`🔍 [${date}] 搜尋過去 ${HOURS_AGO} 小時內的 AI 前端熱門 YouTube 影片...`)
   console.log(`   關鍵字：${KEYWORDS.join('、')}\n`)
 
   const allVideos = await fetchYouTubeVideos({
@@ -85,14 +86,20 @@ export const runDailyAgent = async () => {
     return { date, videos: allVideos, summary: null, outputPath: null }
   }
 
-  console.log(`✅ 搜尋 ${allVideos.length} 支 → 篩選 ${featuredVideos.length} 支高相關影片`)
+  console.log(`✅ 搜尋 ${allVideos.length} 支熱門影片 → 篩選 ${featuredVideos.length} 支`)
+  console.log('   正在取得影片字幕...\n')
+
+  const videosWithTranscripts = await enrichVideosWithTranscripts(featuredVideos)
+  const transcriptCount = videosWithTranscripts.filter((video) => video.hasTranscript).length
+
+  console.log(`📝 成功取得 ${transcriptCount}/${videosWithTranscripts.length} 支影片字幕`)
   console.log('   正在請 Groq 產生繁體中文精選摘要...\n')
 
-  const summary = await summarizeVideos(featuredVideos, KEYWORDS)
+  const summary = await summarizeVideos(videosWithTranscripts, KEYWORDS)
   const markdown = buildMarkdown({
     date,
     summary,
-    featuredVideos,
+    featuredVideos: videosWithTranscripts,
     allVideos,
     keywords: KEYWORDS,
   })
@@ -102,8 +109,8 @@ export const runDailyAgent = async () => {
   console.log(summary)
   console.log('\n========== 精選影片清單 ==========\n')
 
-  featuredVideos.forEach((video) => {
-    console.log(`${video.rank}. ${video.title}`)
+  videosWithTranscripts.forEach((video) => {
+    console.log(`${video.rank}. ${video.title}${video.hasTranscript ? ' 📝' : ''}`)
     console.log(`   頻道：${video.channel}`)
     console.log(`   連結：${video.url}`)
     console.log('')
@@ -111,9 +118,9 @@ export const runDailyAgent = async () => {
 
   console.log(`📄 摘要已儲存至：${outputPath}`)
 
-  await sendLineNotification({ summary, date, videos: featuredVideos })
+  await sendLineNotification({ summary, date, videos: videosWithTranscripts })
 
-  return { date, videos: featuredVideos, summary, outputPath }
+  return { date, videos: videosWithTranscripts, summary, outputPath }
 }
 
 const isDirectRun = process.argv[1]?.endsWith('daily-agent.js')
