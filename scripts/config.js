@@ -15,6 +15,9 @@ export const MIN_RELEVANCE_SCORE = 0
 
 export const GROQ_MODEL = 'llama-3.3-70b-versatile'
 export const OUTPUT_DIR = 'output/summaries'
+export const DOCS_DIR = 'docs'
+export const SITE_BASE_URL =
+  process.env.SITE_BASE_URL || 'https://bebeboboha.github.io/ai_frontend_tool'
 
 export const TRANSCRIPT_CHAR_LIMIT = 4000
 export const TRANSCRIPT_FETCH_DELAY_MS = 500

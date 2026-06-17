@@ -13,6 +13,7 @@ import {
 import { filterVideos } from './filter-videos.js'
 import { fetchYouTubeVideos, formatViewCount } from './fetch-youtube.js'
 import { enrichVideosWithTranscripts } from './fetch-transcript.js'
+import { generateSummaryPage } from './generate-site.js'
 import { sendLineNotification } from './notify-line.js'
 import { summarizeVideos } from './summarize.js'
 
@@ -104,6 +105,7 @@ export const runDailyAgent = async () => {
     keywords: KEYWORDS,
   })
   const outputPath = await saveSummary(markdown, date)
+  const { pageUrl } = await generateSummaryPage(markdown, date)
 
   console.log('========== 繁體中文精選摘要 ==========\n')
   console.log(summary)
@@ -117,10 +119,11 @@ export const runDailyAgent = async () => {
   })
 
   console.log(`📄 摘要已儲存至：${outputPath}`)
+  console.log(`🌐 網頁版：${pageUrl}`)
 
-  await sendLineNotification({ summary, date, videos: videosWithTranscripts })
+  await sendLineNotification({ summary, date, videos: videosWithTranscripts, pageUrl })
 
-  return { date, videos: videosWithTranscripts, summary, outputPath }
+  return { date, videos: videosWithTranscripts, summary, outputPath, pageUrl }
 }
 
 const isDirectRun = process.argv[1]?.endsWith('daily-agent.js')

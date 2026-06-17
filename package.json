@@ -6,10 +6,12 @@
   "scripts": {
     "daily": "node scripts/daily-agent.js",
     "summarize": "node scripts/youtube-summary.js",
-    "line:test": "node scripts/test-line.js"
+    "line:test": "node scripts/test-line.js",
+    "site:build": "node scripts/build-site.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
+    "marked": "^18.0.5",
     "node-fetch": "^3.3.2",
     "youtube-transcript": "^1.3.1"
   },

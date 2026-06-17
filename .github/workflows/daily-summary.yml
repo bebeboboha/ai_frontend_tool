@@ -37,4 +37,6 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: add daily AI summary'
-          file_pattern: 'output/summaries/*.md'
+          file_pattern: |
+            output/summaries/*.md
+            docs/**

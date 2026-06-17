@@ -1,3 +1,4 @@
+import { getSummaryPageUrl } from './generate-site.js'
 import { formatViewCount } from './fetch-youtube.js'
 import { fetch } from './http.js'
 
@@ -44,9 +45,10 @@ const formatTopPicks = (summary, videos) => {
   })
 }
 
-export const buildLineMessage = ({ summary, date, videos = [] }) => {
+export const buildLineMessage = ({ summary, date, videos = [], pageUrl }) => {
   const headline = extractHeadline(summary)
   const topItems = formatTopPicks(summary, videos)
+  const fullPageUrl = pageUrl || getSummaryPageUrl(date)
 
   const parts = [`📋 AI 每日摘要 — ${date}`, '', `💡 ${headline}`]
 
@@ -54,10 +56,12 @@ export const buildLineMessage = ({ summary, date, videos = [] }) => {
     parts.push('', '🎬 Top 3 精選', topItems.join('\n\n'))
   }
 
+  parts.push('', '📖 查看完整摘要：', fullPageUrl)
+
   return truncate(parts.join('\n'), 4800)
 }
 
-export const sendLineNotification = async ({ summary, date, videos = [] }) => {
+export const sendLineNotification = async ({ summary, date, videos = [], pageUrl }) => {
   if (!LINE_CHANNEL_ACCESS_TOKEN || !LINE_USER_ID) {
     console.log('ℹ️  未設定 LINE 憑證，跳過通知')
     return false
@@ -74,7 +78,7 @@ export const sendLineNotification = async ({ summary, date, videos = [] }) => {
       messages: [
         {
           type: 'text',
-          text: buildLineMessage({ summary, date, videos }),
+          text: buildLineMessage({ summary, date, videos, pageUrl }),
         },
       ],
     }),
