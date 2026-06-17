@@ -4,20 +4,42 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 前端每日摘要</title>
-  <meta name="description" content="YouTube AI 前端熱門影片每日精選摘要" />
+  <meta name="description" content="YouTube 熱門影片精選 · 繁體中文重點整理" />
+  <meta name="theme-color" content="#0b0f17" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./assets/style.css" />
 </head>
 <body>
-  <div class="container">
-    
-    <div class="header">
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-kicker">AI Frontend Tool</span>
+        <span class="brand-title">每日情報摘要</span>
+      </div>
+      
+    </header>
+
+    <section class="hero">
       <h1>AI 前端每日摘要</h1>
-      <p>YouTube AI 前端熱門影片每日精選摘要</p>
-    </div>
-    <main class="card content">
-      <ul class="summary-list"><li><a href="./summaries/2026-06-17.html">AI 每日摘要 — 2026-06-17</a></li></ul>
+      <p>YouTube 熱門影片精選 · 繁體中文重點整理</p>
+    </section>
+
+    <main class="card">
+      <div class="card-inner content">
+        <div class="summary-grid">
+        <a class="summary-card" href="./summaries/2026-06-17.html">
+          <div class="summary-card-main">
+            <span class="summary-date">2026-06-17</span>
+            <span class="summary-title">AI 前端每日摘要</span>
+          </div>
+          <span class="summary-arrow">→</span>
+        </a></div>
+      </div>
     </main>
-    <footer class="footer">AI Frontend Tool · 每日自動摘要</footer>
+
+    <footer class="footer">每天早上自動更新</footer>
   </div>
 </body>
 </html>
