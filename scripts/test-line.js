@@ -11,16 +11,32 @@ const getTodayDate = () => {
 
 const main = async () => {
   const date = getTodayDate()
+  const videos = [
+    {
+      title: '測試影片 A',
+      description: '這是一則測試通知',
+      url: 'https://www.youtube.com/watch?v=test1',
+    },
+    {
+      title: '測試影片 B',
+      description: '第二則測試通知',
+      url: 'https://www.youtube.com/watch?v=test2',
+    },
+  ]
+
   const summary = `## 今日一句話
 LINE 通知測試成功！
 
 ## Top 5 精選
-### 1. 測試影片
+### 1. 測試影片 A
 - **重點**：這是一則測試通知
 - **適合誰**：所有人
-- **連結**：https://example.com`
 
-  await sendLineNotification({ summary, date })
+### 2. 測試影片 B
+- **重點**：第二則測試通知
+- **適合誰**：所有人`
+
+  await sendLineNotification({ summary, date, videos })
   console.log('測試完成')
 }
 

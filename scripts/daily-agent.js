@@ -111,7 +111,7 @@ export const runDailyAgent = async () => {
 
   console.log(`📄 摘要已儲存至：${outputPath}`)
 
-  await sendLineNotification({ summary, date })
+  await sendLineNotification({ summary, date, videos: featuredVideos })
 
   return { date, videos: featuredVideos, summary, outputPath }
 }

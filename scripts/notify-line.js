@@ -13,33 +13,39 @@ const extractHeadline = (summary) => {
   return match?.[1]?.trim() ?? '今日摘要已更新'
 }
 
-const extractTopPicks = (summary) => {
-  const picks = [...summary.matchAll(/### \d+\. (.+)\n- \*\*重點\*\*：(.+)/g)]
-
-  return picks
-    .slice(0, 3)
-    .map(([, title, point], index) => `${index + 1}. ${title}\n   ${point.trim()}`)
-    .join('\n\n')
+const extractSummaryPicks = (summary) => {
+  return [...summary.matchAll(/### \d+\. (.+)\n- \*\*重點\*\*：(.+)/g)].map(([, title, point]) => ({
+    title: title.trim(),
+    point: point.trim(),
+  }))
 }
 
-export const buildLineMessage = ({ summary, date }) => {
+const formatTopPicks = (summary, videos) => {
+  const summaryPicks = extractSummaryPicks(summary)
+
+  return videos.slice(0, 3).map((video, index) => {
+    const pick = summaryPicks[index]
+    const title = pick?.title ?? video.title
+    const point = pick?.point ?? truncate(video.description, 60)
+
+    return `${index + 1}. ${title}\n   ${point}\n   🔗 ${video.url}`
+  })
+}
+
+export const buildLineMessage = ({ summary, date, videos = [] }) => {
   const headline = extractHeadline(summary)
-  const topPicks = extractTopPicks(summary)
+  const topItems = formatTopPicks(summary, videos)
 
-  const parts = [
-    `📋 AI 每日摘要 — ${date}`,
-    '',
-    `💡 ${headline}`,
-  ]
+  const parts = [`📋 AI 每日摘要 — ${date}`, '', `💡 ${headline}`]
 
-  if (topPicks) {
-    parts.push('', '🎬 Top 3 精選', topPicks)
+  if (topItems.length > 0) {
+    parts.push('', '🎬 Top 3 精選', topItems.join('\n\n'))
   }
 
   return truncate(parts.join('\n'), 4800)
 }
 
-export const sendLineNotification = async ({ summary, date }) => {
+export const sendLineNotification = async ({ summary, date, videos = [] }) => {
   if (!LINE_CHANNEL_ACCESS_TOKEN || !LINE_USER_ID) {
     console.log('ℹ️  未設定 LINE 憑證，跳過通知')
     return false
@@ -56,7 +62,7 @@ export const sendLineNotification = async ({ summary, date }) => {
       messages: [
         {
           type: 'text',
-          text: buildLineMessage({ summary, date }),
+          text: buildLineMessage({ summary, date, videos }),
         },
       ],
     }),
