@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import 'dotenv/config'
+import { getTaipeiDate } from './date.js'
 import {
   HOURS_AGO,
   KEYWORDS,
@@ -17,13 +18,7 @@ import { generateSummaryPage } from './generate-site.js'
 import { sendLineNotification } from './notify-line.js'
 import { summarizeVideos } from './summarize.js'
 
-const getTodayDate = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+const NOTIFY_PAYLOAD_PATH = join(OUTPUT_DIR, '.notify-payload.json')
 
 const formatVideoList = (videos) => {
   return videos
@@ -60,7 +55,7 @@ const saveSummary = async (markdown, date) => {
 }
 
 export const runDailyAgent = async () => {
-  const date = getTodayDate()
+  const date = getTaipeiDate()
 
   console.log(`🔍 [${date}] 搜尋過去 ${HOURS_AGO} 小時內的 AI 前端熱門 YouTube 影片...`)
   console.log(`   關鍵字：${KEYWORDS.join('、')}\n`)
@@ -121,7 +116,24 @@ export const runDailyAgent = async () => {
   console.log(`📄 摘要已儲存至：${outputPath}`)
   console.log(`🌐 網頁版：${pageUrl}`)
 
-  await sendLineNotification({ summary, date, videos: videosWithTranscripts, pageUrl })
+  const notifyPayload = {
+    date,
+    summary,
+    pageUrl,
+    videos: videosWithTranscripts.map((video) => ({
+      title: video.title,
+      url: video.url,
+      viewCount: video.viewCount,
+      description: video.description,
+    })),
+  }
+
+  if (process.env.CI === 'true') {
+    await writeFile(NOTIFY_PAYLOAD_PATH, JSON.stringify(notifyPayload, null, 2), 'utf-8')
+    console.log('ℹ️  CI 模式：LINE 通知將在 GitHub Pages 部署完成後送出')
+  } else {
+    await sendLineNotification({ summary, date, videos: videosWithTranscripts, pageUrl })
+  }
 
   return { date, videos: videosWithTranscripts, summary, outputPath, pageUrl }
 }

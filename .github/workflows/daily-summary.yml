@@ -2,9 +2,11 @@ name: Daily AI Summary
 
 on:
   schedule:
-    # 每天早上 9:30（台北時間 UTC+8）
+    # 備援排程：GitHub 常延遲數小時，建議用 cron-job.org 在 9:30 台北時間觸發 workflow_dispatch
     - cron: '30 1 * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [daily-summary]
 
 jobs:
   summarize:
@@ -27,10 +29,9 @@ jobs:
 
       - name: Run daily agent
         env:
+          CI: 'true'
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: npm run daily
 
       - name: Build summary pages
@@ -47,3 +48,67 @@ jobs:
             git commit -m "chore: add daily AI summary"
             git push
           fi
+
+      - name: Upload notify payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: notify-payload
+          path: output/summaries/.notify-payload.json
+          if-no-files-found: error
+
+  deploy:
+    needs: summarize
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download notify payload
+        uses: actions/download-artifact@v4
+        with:
+          name: notify-payload
+
+      - name: Send LINE notification
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: npm run line:send
