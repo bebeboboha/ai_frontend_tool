@@ -18,7 +18,7 @@ import { generateSummaryPage } from './generate-site.js'
 import { sendLineNotification } from './notify-line.js'
 import { summarizeVideos } from './summarize.js'
 
-const NOTIFY_PAYLOAD_PATH = join(OUTPUT_DIR, '.notify-payload.json')
+const NOTIFY_PAYLOAD_PATH = join(OUTPUT_DIR, 'notify-payload.json')
 
 const formatVideoList = (videos) => {
   return videos

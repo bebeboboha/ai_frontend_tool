@@ -5,7 +5,7 @@ import { OUTPUT_DIR } from './config.js'
 import { getTaipeiDate } from './date.js'
 import { sendLineNotification } from './notify-line.js'
 
-const NOTIFY_PAYLOAD_PATH = join(OUTPUT_DIR, '.notify-payload.json')
+const NOTIFY_PAYLOAD_PATH = join(OUTPUT_DIR, 'notify-payload.json')
 
 const loadNotifyPayload = async () => {
   const raw = await readFile(NOTIFY_PAYLOAD_PATH, 'utf-8')

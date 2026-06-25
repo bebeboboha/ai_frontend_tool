@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: notify-payload
-          path: output/summaries/.notify-payload.json
+          path: output/summaries/notify-payload.json
           if-no-files-found: error
 
   deploy:
